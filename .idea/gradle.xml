@@ -4,7 +4,13 @@
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleJvm" value="21" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/PeerA" />
+            <option value="$PROJECT_DIR$/PeerB" />
+          </set>
+        </option>
       </GradleProjectSettings>
     </option>
   </component>

@@ -59,8 +59,66 @@ public class TelemetryProcessor {
         //     otro         -> "OK;BATTERY_OK;" + value
         // - Cualquier otro sensorType:
         //     retornar "ERROR;UNKNOWN_SENSOR_TYPE"
+        if ( rawMessage == null || rawMessage.trim().isEmpty()) {
+            return "ERROR;INVALID_FORMAT";
+        }
 
-        return "ERROR;NOT_IMPLEMENTED"; // Reemplazar con su implementación
+        String[] splitRawMessage = rawMessage.trim().split(";");
+        if (splitRawMessage.length == 0) {
+            return "ERROR;INVALID_FORMAT";
+        }
+        Double valueStrToDouble = 0.0;
+        if(splitRawMessage[0].trim().equalsIgnoreCase("STATUS")) {
+            if(splitRawMessage.length != 2 || (splitRawMessage[1].trim().isEmpty())) {
+                return "ERROR;INVALID_FORMAT";
+            }
+            TelemetryData d = lastReadings.get(splitRawMessage[1].trim());
+            if (d == null) {
+                return "ERROR;DEVICE_NOT_FOUND";
+
+            }else{
+                return "STATUS_OK;" + d.getDeviceId() + ";" + d.getSensorType() + ";" + d.getValue();
+            }
+        } else {
+            if(splitRawMessage.length == 3 ){
+                try {
+                    valueStrToDouble = Double.parseDouble(splitRawMessage[2].trim());
+                }catch (NumberFormatException e){
+                    return "ERROR;INVALID_FORMAT";
+                }
+
+            }else{
+                return "ERROR;INVALID_FORMAT";
+            }
+            lastReadings.put(splitRawMessage[0].trim(), new TelemetryData(splitRawMessage[0].trim(), splitRawMessage[1].trim(), valueStrToDouble));
+
+            if (splitRawMessage[1].trim().equalsIgnoreCase("TEMP")){
+                if(valueStrToDouble>40.0) {
+                    return "ALERT;HIGH_TEMPERATURE;" + valueStrToDouble;
+                }else if(valueStrToDouble<0.0) {
+                    return "ALERT;FREEZING_TEMPERATURE;" + valueStrToDouble;
+                }else{
+                    return "OK;TEMP_RECORDED;" + valueStrToDouble;
+                }
+            }else if (splitRawMessage[1].trim().equalsIgnoreCase("HUMIDITY")){
+                if(valueStrToDouble>90.0) {
+                    return "ALERT;HIGH_HUMIDITY;" + valueStrToDouble;
+                }else if(valueStrToDouble<20.0) {
+                    return "ALERT;LOW_HUMIDITY;" + valueStrToDouble;
+                }else {
+                    return "OK;HUMIDITY_RECORDED;" + valueStrToDouble;
+                }
+            } else if (splitRawMessage[1].trim().equalsIgnoreCase("BATTERY")) {
+                if(valueStrToDouble<20.0) {
+                    return "ALERT;LOW_BATTERY;" + valueStrToDouble;
+                }else{
+                    return "OK;BATTERY_OK;" + valueStrToDouble;
+                }
+
+            }else {
+                return "ERROR;UNKNOWN_SENSOR_TYPE";
+            }
+        }
     }
 
     public Map<String, TelemetryData> getLastReadings() {
@@ -69,5 +127,6 @@ public class TelemetryProcessor {
 
     public void clear() {
         lastReadings.clear();
+
     }
 }
